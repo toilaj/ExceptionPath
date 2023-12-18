@@ -46,9 +46,10 @@ int main()
         rte_exit(EXIT_FAILURE, "Cannot create paired port for port %u\n", port_id);
 
     printf("nb_ports = %d\n", rte_eth_dev_count_avail());
-    pktmbuf_pool = rte_pktmbuf_pool_create("pktmbuf_pool", 4096,
-                                                               256, 0, RTE_MBUF_DEFAULT_BUF_SIZE,
-                                                               rte_socket_id());
+    pktmbuf_pool = rte_pktmbuf_pool_create("pktmbuf_pool",
+                                           4096,
+                                           256, 0, RTE_MBUF_DEFAULT_BUF_SIZE,
+                                           rte_socket_id());
     if(pktmbuf_pool == NULL) {
         rte_exit(EXIT_FAILURE, "Cannot init mbuf pool\n");
     }
