@@ -18,14 +18,21 @@
 #define RX_DESC_DEFAULT 1024
 #define TX_DESC_DEFAULT 1024
 #define MAX_PKT_BURST 32
+#define RX_RING_SIZE 1024
+#define VIRTIO_USER_NAME "virtio_user_"
 
-#define VIRTIO_USER_NAME "virtio_user"
+#define MAX_PORT_NUM 256
 
-struct port_map {
+struct port_info {
     uint16_t port_id;
-    uint16_t peer_port_id;
+    uint16_t peer_id;
+    struct rte_ether_addr mac_addr;
+    uint8_t type;
+    uint8_t enabled;
+    uint8_t res;
 };
-
+extern struct port_info port_infos[MAX_PORT_NUM];
 extern struct rte_mempool *pktmbuf_pool;
-int port_config(unsigned char port_id);
+int config_port(unsigned char port_id);
+int init_ports();
 #endif //LWFW_PORTS_H

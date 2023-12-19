@@ -19,8 +19,6 @@ int ethdev_stats_show(uint16_t port_id)
     static const char *nic_stats_border = "########################";
     int rc;
 
-
-
     rc = rte_eth_stats_get(port_id, &stats);
     if (rc != 0) {
         fprintf(stderr,
@@ -29,13 +27,12 @@ int ethdev_stats_show(uint16_t port_id)
         return rc;
     }
 
-
     fprintf(stdout,
             "\n  %s NIC statistics for port %-2d %s\n"
             "  RX-packets: %-10"PRIu64" RX-missed: %-10"PRIu64" RX-bytes:  ""%-"PRIu64"\n"
-                                                                                      "  RX-errors: %-"PRIu64"\n"
-                                                                                                             "  RX-nombuf:  %-10"PRIu64"\n"
-                                                                                                                                       "  TX-packets: %-10"PRIu64" TX-errors: %-10"PRIu64" TX-bytes:  ""%-"PRIu64"\n",
+            "  RX-errors: %-"PRIu64"\n"
+            "  RX-nombuf:  %-10"PRIu64"\n"
+            "  TX-packets: %-10"PRIu64" TX-errors: %-10"PRIu64" TX-bytes:  ""%-"PRIu64"\n",
             nic_stats_border, port_id, nic_stats_border, stats.ipackets, stats.imissed,
             stats.ibytes, stats.ierrors, stats.rx_nombuf, stats.opackets, stats.oerrors,
             stats.obytes);
@@ -77,8 +74,8 @@ int ethdev_stats_show(uint16_t port_id)
 
     fprintf(stdout,"\n  Throughput (since last show)\n"
                    "  Rx-pps: %12"PRIu64"          Rx-bps: %12"PRIu64"\n  Tx-pps: %12"
-    PRIu64"          Tx-bps: %12"PRIu64"\n"
-                                       "  %s############################%s\n",
+                   PRIu64"          Tx-bps: %12"PRIu64"\n"
+                    "  %s############################%s\n",
             mpps_rx, mbps_rx * 8, mpps_tx, mbps_tx * 8, nic_stats_border, nic_stats_border);
     return 0;
 }

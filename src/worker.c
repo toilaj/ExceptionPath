@@ -4,6 +4,7 @@
 
 #include "worker.h"
 #include "ports.h"
+#include "log.h"
 
 static void dump_pkt(struct rte_mbuf *pkt) {
     printf("---------------------Port %d-------------------------------------\n", pkt->port);
@@ -12,16 +13,20 @@ static void dump_pkt(struct rte_mbuf *pkt) {
 
 int worker(void *arg)
 {
-    struct port_map port_map = *(struct port_map*)arg;
-    uint16_t port_id = port_map.port_id;
-    uint16_t peer_id = port_map.peer_port_id;
-    port_config(port_id);
+    struct port_info port = *(struct port_info*)arg;
+    uint16_t rx_port_id = port.port_id;
+    uint16_t tx_port_id = port.peer_id;
+    while(!port.enabled) {
+        LOG("port %u is not enabled!", port.port_id);
+        rte_delay_ms(1000);
+    }
     rte_atomic16_inc(&ready);
+    LOG("worker for port %u start!", port.port_id);
     while(1) {
         struct rte_mbuf *rx_pkts[MAX_PKT_BURST];
-        int rxBurst = rte_eth_rx_burst(port_id, 0, (struct rte_mbuf**)&rx_pkts, MAX_PKT_BURST);
+        int rxBurst = rte_eth_rx_burst(rx_port_id, 0, (struct rte_mbuf**)&rx_pkts, MAX_PKT_BURST);
         if(rxBurst > 0) {
-            uint16_t txBurst = rte_eth_tx_burst(peer_id,0,(struct rte_mbuf**)&rx_pkts, rxBurst);
+            uint16_t txBurst = rte_eth_tx_burst(tx_port_id,0,(struct rte_mbuf**)&rx_pkts, rxBurst);
             if(txBurst != rxBurst) {
                 int i;
                 for(i = rxBurst - txBurst; i < rxBurst; i++) {
@@ -29,6 +34,8 @@ int worker(void *arg)
                 }
             }
         }
+        // sweep rx and tx port;
+        (rx_port_id ^ tx_port_id) && (tx_port_id ^= rx_port_id ^= tx_port_id, rx_port_id ^= tx_port_id);
     }
     return 0;
 }
