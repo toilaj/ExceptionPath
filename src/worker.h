@@ -18,6 +18,7 @@
 
 struct lcore_info {
     uint16_t ports[MAX_PORT_NUM];
+    uint16_t ports_count;
     struct rte_ring *recv_queue_media;
     struct rte_ring *recv_queue_ctrl;
     struct rte_ring *recv_queue_forward;
@@ -32,5 +33,5 @@ struct lcore_info {
 extern rte_atomic16_t ready;
 int worker(void *arg);
 
-int init_lcore(struct lcore_info (*lcores)[], struct port_info (*ports)[])
+int init_lcore(struct lcore_info (*lcores)[], struct port_info (*ports)[]);
 #endif //LWFW_WORKER_H

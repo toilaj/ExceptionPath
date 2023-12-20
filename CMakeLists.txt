@@ -17,7 +17,8 @@ add_executable(lwFW
         src/ports.c
         src/worker.c
         src/worker.h
-        src/log.h)
+        src/log.h
+        src/packet.h)
 
 target_compile_options(lwFW PRIVATE ${LIBDPDK_STATIC_CFLAGS})
 target_link_libraries(lwFW ${LIBDPDK_STATIC_LDFLAGS} -pthread)

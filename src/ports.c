@@ -115,7 +115,6 @@ int init_ports(struct port_info *port_infos[]) {
         char port_name[64] = {0};
         char port_args[512] = {0};
         struct rte_ether_addr addr = {0};
-        struct rte_ether_addr addr = {0};
         struct port_info port = {0};
         uint16_t port_id = i;
         ret = rte_eth_macaddr_get(port_id, &addr);
