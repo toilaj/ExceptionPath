@@ -6,7 +6,7 @@
 #include "ports.h"
 #include "log.h"
 
-struct port_info port_infos[MAX_PORT_NUM] = {0};
+
 
 static uint16_t nb_rxd = RX_DESC_DEFAULT;
 static uint16_t nb_txd = TX_DESC_DEFAULT;
@@ -97,7 +97,7 @@ int config_port(unsigned char port_id) {
     return 0;
 }
 
-int init_ports() {
+int init_ports(struct port_info *port_infos[]) {
     uint16_t nb_ports = rte_eth_dev_count_avail();
     LOG("find physic %u ports", nb_ports);
     int i,k = 0;
@@ -115,6 +115,7 @@ int init_ports() {
         char port_name[64] = {0};
         char port_args[512] = {0};
         struct rte_ether_addr addr = {0};
+        struct rte_ether_addr addr = {0};
         struct port_info port = {0};
         uint16_t port_id = i;
         ret = rte_eth_macaddr_get(port_id, &addr);
@@ -131,22 +132,22 @@ int init_ports() {
             continue;
         }
         port.port_id = port_id;
-        ret = rte_eth_dev_get_port_by_name(port_name, &(port.peer_id));
+        ret = rte_eth_dev_get_port_by_name(port_name, &(port.vport_id));
         if(ret != 0) {
             LOG("cannot get port %s by name", port_name);
             continue;
         }
         rte_memcpy(&port.mac_addr, &addr, sizeof(struct rte_ether_addr));
-        LOG("create peer port %u for physic port %u, mac: "RTE_ETHER_ADDR_PRT_FMT, port.peer_id, port.port_id, RTE_ETHER_ADDR_BYTES(&port.mac_addr));
+        LOG("create peer port %u for physic port %u, mac: "RTE_ETHER_ADDR_PRT_FMT, port.vport_id, port.port_id, RTE_ETHER_ADDR_BYTES(&port.mac_addr));
         config_port(port.port_id);
-        config_port(port.peer_id);
+        config_port(port.vport_id);
         port.enabled = 1;
-        port_infos[k] = port;
+        (*port_infos)[k] = port;
         k++;
     }
     if(k == 0) {
         rte_exit(EXIT_FAILURE, "No available port info\n");
     }
     LOG("ports initial complete! ports count = %u", rte_eth_dev_count_avail());
-    return 0;
+    return k;
 }
