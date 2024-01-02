@@ -34,7 +34,7 @@ int worker(void *arg)
                 }
             }
         }
-        // sweep rx and tx port;
+        // swap rx and tx port;
         (rx_port_id ^ tx_port_id) && (tx_port_id ^= rx_port_id ^= tx_port_id, rx_port_id ^= tx_port_id);
     }
     return 0;
