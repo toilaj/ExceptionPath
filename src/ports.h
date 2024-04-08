@@ -27,6 +27,8 @@ struct port_info {
     uint16_t port_id;
     uint16_t peer_id;
     struct rte_ether_addr mac_addr;
+    uint32_t ipv4_addr;
+    uint32_t ipv4_mask;
     uint8_t type;
     uint8_t enabled;
     uint8_t res;
