@@ -33,7 +33,7 @@ struct port_info {
     uint8_t enabled;
     uint8_t res;
 };
-extern struct port_info port_infos[MAX_PORT_NUM];
+extern struct port_info g_port_infos[MAX_PORT_NUM];
 extern struct rte_mempool *pktmbuf_pool;
 int config_port(unsigned char port_id);
 int init_ports();

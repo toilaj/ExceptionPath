@@ -12,13 +12,13 @@
 #include "ports.h"
 #include "log.h"
 
-struct port_info port_infos[MAX_PORT_NUM] = {0};
 
 static uint16_t nb_rxd = RX_DESC_DEFAULT;
 static uint16_t nb_txd = TX_DESC_DEFAULT;
 
 
 struct rte_mempool *pktmbuf_pool = NULL;
+struct port_info g_port_infos[MAX_PORT_NUM] = {0};
 
 static struct rte_eth_conf port_conf = {
         .rxmode = {
@@ -189,7 +189,7 @@ int init_ports() {
         config_port(port.port_id);
         config_port(port.peer_id);
         port.enabled = 1;
-        port_infos[k] = port;
+        g_port_infos[k] = port;
         k++;
     }
     if(k == 0) {

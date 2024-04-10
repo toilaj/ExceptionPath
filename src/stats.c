@@ -84,7 +84,7 @@ void stats_thread() {
     int i;
     while(1) {
         for(i = 0; i < rte_eth_dev_count_avail(); i++){
-            ethdev_stats_show(i);
+            //ethdev_stats_show(i);
         }
         rte_delay_ms(1000);
     }
