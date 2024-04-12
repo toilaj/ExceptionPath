@@ -40,7 +40,7 @@ int main() {
     nlh = (struct nlmsghdr *)buffer;
     nlh->nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg));
     nlh->nlmsg_type = RTM_GETNEIGH;
-    nlh->nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;
+    nlh->nlmsg_flags = NLM_F_REQUEST | NLM_F_ROOT;
     nlh->nlmsg_seq = 0;
     nlh->nlmsg_pid = getpid();
 
@@ -93,7 +93,7 @@ int main() {
             }
         }
     }
-
+go_out:
     close(sockfd);
     return EXIT_SUCCESS;
 }

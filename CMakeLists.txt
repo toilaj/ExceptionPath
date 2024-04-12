@@ -21,6 +21,8 @@ add_executable(lwFW
         src/log.h
 		src/packet.h
 		src/packet.c
+		src/rtm.h
+		src/rtm.c
 )
 
 target_compile_options(lwFW PRIVATE ${LIBDPDK_STATIC_CFLAGS} ${LIBNDPI_STATIC_CFLAGS} -g)

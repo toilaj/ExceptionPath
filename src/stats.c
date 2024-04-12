@@ -80,7 +80,7 @@ int ethdev_stats_show(uint16_t port_id)
     return 0;
 }
 
-void stats_thread() {
+void *stats_thread(void *args) {
     int i;
     while(1) {
         for(i = 0; i < rte_eth_dev_count_avail(); i++){

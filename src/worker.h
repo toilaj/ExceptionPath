@@ -4,8 +4,14 @@
 
 #ifndef LWFW_WORKER_H
 #define LWFW_WORKER_H
+
+#include <pthread.h>
+
 #include "dpdk.h"
 #include "ports.h"
+#include "stats.h"
+#include "rtm.h"
+
 
 #define MAX_WORKER_NUM (256)
 #define WORKER_RING_SIZE (4096)
@@ -34,5 +40,19 @@ extern uint8_t g_worker_cnt;
 int init_worker(uint8_t lcore_id);
 int worker(void *args);
 int dispatch_worker(void *args);
+
+
+inline static int start_control_thread() {
+    pthread_t stats_thread_info, rtm_thread_info;
+	int res;
+    res = pthread_create(&stats_thread_info, NULL, stats_thread, NULL);
+    if (res != 0) {
+        return 1;
+    }
+    res = pthread_create(&rtm_thread_info, NULL, rtm_thread, NULL);
+    if (res != 0) {
+        return 1;
+    }
+}
 
 #endif //LWFW_WORKER_H

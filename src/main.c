@@ -45,11 +45,12 @@ int main()
         rte_delay_ms(1000);
     }
 	LOG("all media threads are started");
-    stats_thread();
 
-//    while(1){
-//        rte_delay_ms(10000);
-//    }
+	start_control_thread();
+	while(1) {
+		//TODO for demo management
+		rte_delay_us(1000 * 10);
+	}
     rte_eal_mp_wait_lcore();
     rte_eal_cleanup();
 

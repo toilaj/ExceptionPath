@@ -33,7 +33,8 @@ int get_kernel_route_table() {
     nlh = (struct nlmsghdr *)buffer;
     nlh->nlmsg_len = NLMSG_LENGTH(sizeof(struct rtmsg));
     nlh->nlmsg_type = RTM_GETROUTE;
-    nlh->nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;
+    //nlh->nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;
+	nlh->nlmsg_flags = NLM_F_REQUEST | NLM_F_ROOT;
     nlh->nlmsg_seq = 1;
     nlh->nlmsg_pid = getpid();
 
@@ -52,26 +53,36 @@ int get_kernel_route_table() {
         }
 
         for (struct nlmsghdr *nh = (struct nlmsghdr *)buffer; NLMSG_OK(nh, len); nh = NLMSG_NEXT(nh, len)) {
-            if (nh->nlmsg_type == NLMSG_DONE)
-                break;
-            
+            if (nh->nlmsg_type == NLMSG_DONE) {
+				goto get_out;	
+			}
             if (nh->nlmsg_type == RTM_NEWROUTE) {
                 struct rtmsg *rtm = (struct rtmsg *)NLMSG_DATA(nh);
                 struct rtattr *attr = (struct rtattr *)RTM_RTA(rtm);
                 int rtl = RTM_PAYLOAD(nh);
 
                 while (RTA_OK(attr, rtl)) {
-                    if (attr->rta_type == RTA_DST || attr->rta_type == RTA_GATEWAY) {
-                        char dst[INET_ADDRSTRLEN], gateway[INET_ADDRSTRLEN];
-                        inet_ntop(AF_INET, RTA_DATA(attr), (attr->rta_type == RTA_DST) ? dst : gateway, sizeof(dst));
-                        printf("Destination: %s, Gateway: %s\n", dst, gateway);
-                    }
+					switch(attr->rta_type) {
+						case RTA_DST:
+						case RTA_GATEWAY:			
+							if (attr->rta_type == RTA_DST || attr->rta_type == RTA_GATEWAY) {
+								char dst[INET_ADDRSTRLEN], gateway[INET_ADDRSTRLEN];
+								inet_ntop(AF_INET, RTA_DATA(attr), (attr->rta_type == RTA_DST) ? dst : gateway, sizeof(dst));
+								printf("Destination: %s, Gateway: %s\n", dst, gateway);
+							}
+							break;
+						case RTA_OIF:
+							//printf("if: %s\n", RTA_DATA(attr));
+						default:
+							printf("attr->rta_type = %u\n", attr->rta_type);
+							break;
+                	}
                     attr = RTA_NEXT(attr, rtl);
-                }
-            }
-        }
-    }
-
+            	}
+        	}
+    	}
+	}
+get_out:
     close(sockfd);
     return 0;
 }

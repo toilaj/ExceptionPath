@@ -158,8 +158,8 @@ int init_ports() {
         uint16_t port_id = i;
 	char ip_str[INET_ADDRSTRLEN];
 	char mask_str[INET_ADDRSTRLEN];
-	port.ipv4_addr = ntohl(0xac15a564 + i);//mock for test, 172.21.165.(100 + i) 
-	port.ipv4_mask = ntohl(0xfffff000);
+	port.ipv4_addr = ntohl(0xc0a86564 + i);//mock for test, 172.21.165.(100 + i) 
+	port.ipv4_mask = ntohl(0xffffff00);
 	inet_ntop(AF_INET, &port.ipv4_addr, ip_str, INET_ADDRSTRLEN);
 	inet_ntop(AF_INET, &port.ipv4_mask, mask_str, INET_ADDRSTRLEN);
         ret = rte_eth_macaddr_get(port_id, &addr);
