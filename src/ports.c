@@ -2,12 +2,6 @@
 // Created by root on 12/18/23.
 //
 
-#include <string.h>
-#include <arpa/inet.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <net/if.h>
 
 #include "ports.h"
 #include "log.h"
@@ -19,6 +13,9 @@ static uint16_t nb_txd = TX_DESC_DEFAULT;
 
 struct rte_mempool *pktmbuf_pool = NULL;
 struct port_info g_port_infos[MAX_PORT_NUM] = {0};
+uint16_t g_port_to_kport[MAX_PORT_NUM] = {0};
+uint16_t g_kport_to_port[MAX_PORT_NUM] = {0};
+
 
 static struct rte_eth_conf port_conf = {
         .rxmode = {
@@ -47,38 +44,6 @@ static struct rte_eth_txconf tx_conf = {
         .tx_free_thresh = 32, /* Use PMD default values */
         .tx_rs_thresh = 32, /* Use PMD default values */
 };
-
-inline static int iface_configure(char* ifname, unsigned char *ip, unsigned char *mask)
-{
-    struct sockaddr_in *sin;
-    struct ifreq ifr;
-    int res = 0;
-    int fd;
-
-    fd = socket(AF_INET, SOCK_DGRAM, 0);
-    if(fd < 0) {
-        return -1;
-    }
-    memset(&ifr, 0, sizeof(ifr));
-    strcpy(ifr.ifr_name, ifname);
-    res |= ioctl(fd, SIOCGIFFLAGS, &ifr);
-    ifr.ifr_flags |= IFF_UP | IFF_RUNNING;
-    res |= ioctl(fd, SIOCSIFFLAGS, &ifr);
-
-    sin = (struct sockaddr_in *)&ifr.ifr_addr;
-    sin->sin_family = AF_INET;
-    inet_aton(ip, &(sin->sin_addr));
-    res |= ioctl(fd, SIOCSIFADDR, &ifr);
-    
-    inet_aton(mask, &(sin->sin_addr));
-    res |= ioctl(fd, SIOCSIFNETMASK, &ifr);
-
-    ifr.ifr_ifru.ifru_mtu = 1500;
-    res |= ioctl(fd, SIOCSIFMTU, &ifr);
-
-    close(fd);
-    return res;
-}
 
 
 
@@ -156,45 +121,51 @@ int init_ports() {
         struct rte_ether_addr addr = {0};
         struct port_info port = {0};
         uint16_t port_id = i;
-	char ip_str[INET_ADDRSTRLEN];
-	char mask_str[INET_ADDRSTRLEN];
-	port.ipv4_addr = ntohl(0xc0a86564 + i);//mock for test, 172.21.165.(100 + i) 
-	port.ipv4_mask = ntohl(0xffffff00);
-	inet_ntop(AF_INET, &port.ipv4_addr, ip_str, INET_ADDRSTRLEN);
-	inet_ntop(AF_INET, &port.ipv4_mask, mask_str, INET_ADDRSTRLEN);
-        ret = rte_eth_macaddr_get(port_id, &addr);
-        if(ret != 0) {
-            LOG("cannot get port %u mac addr", port_id);
-            continue;
-        }
-        snprintf(port_name, sizeof(port_name), "%s%u", VIRTIO_USER_NAME, port_id);
-        snprintf(port_args, sizeof(port_args),
-                 "path=/dev/vhost-net,queues=1,queue_size=%u,iface=%s,mac=" RTE_ETHER_ADDR_PRT_FMT,
-                 RX_RING_SIZE, port_name, RTE_ETHER_ADDR_BYTES(&addr));
-        if (rte_eal_hotplug_add("vdev", port_name, port_args) < 0) {
-            LOG("Cannot create paired port for port %u", port_id);
-            continue;
-        }
-        port.port_id = port_id;
-        ret = rte_eth_dev_get_port_by_name(port_name, &(port.peer_id));
-        if(ret != 0) {
-            LOG("cannot get port %s by name", port_name);
-            continue;
-        }
-        rte_memcpy(&port.mac_addr, &addr, sizeof(struct rte_ether_addr));
-        LOG("create peer port %u for physic port %u, mac: "RTE_ETHER_ADDR_PRT_FMT" ip: %s", port.peer_id, port.port_id, RTE_ETHER_ADDR_BYTES(&port.mac_addr), ip_str);
+		char ip_str[INET_ADDRSTRLEN];
+		char mask_str[INET_ADDRSTRLEN];
+		port.ipv4_addr = ntohl(0xc0a86564 + i);//mock for test, 172.21.165.(100 + i) 
+		port.ipv4_mask = ntohl(0xffffff00);
+		inet_ntop(AF_INET, &port.ipv4_addr, ip_str, INET_ADDRSTRLEN);
+		inet_ntop(AF_INET, &port.ipv4_mask, mask_str, INET_ADDRSTRLEN);
+    	ret = rte_eth_macaddr_get(port_id, &addr);
+    	if(ret != 0) {
+        	LOG("cannot get port %u mac addr", port_id);
+        	continue;
+    	}
+    	snprintf(port_name, sizeof(port_name), "%s%u", VIRTIO_USER_NAME, port_id);
+    	snprintf(port_args, sizeof(port_args),
+       		"path=/dev/vhost-net,queues=1,queue_size=%u,iface=%s,mac=" RTE_ETHER_ADDR_PRT_FMT,
+	    	RX_RING_SIZE, port_name, RTE_ETHER_ADDR_BYTES(&addr));
+    	if (rte_eal_hotplug_add("vdev", port_name, port_args) < 0) {
+        	LOG("Cannot create paired port for port %u", port_id);
+        	continue;
+    	}
+    	port.port_id = port_id;
+    	ret = rte_eth_dev_get_port_by_name(port_name, &(port.peer_id));
+    	if(ret != 0) {
+       		LOG("cannot get port %s by name", port_name);
+        	continue;
+    	}
+    	rte_memcpy(&port.mac_addr, &addr, sizeof(struct rte_ether_addr));
 
-	iface_configure(port_name, ip_str, mask_str);
 
-        config_port(port.port_id);
-        config_port(port.peer_id);
-        port.enabled = 1;
-        g_port_infos[k] = port;
+		ret = iface_configure(port_name, ip_str, mask_str);
+		if(ret < 0) {
+			rte_exit(EXIT_FAILURE, "Cannot get if index\n");
+		}		
+    	config_port(port.port_id);
+    	config_port(port.peer_id);
+		uint16_t kport = (uint16_t)(ret & 0xffff);
+		g_port_to_kport[port.peer_id] = kport;
+		g_kport_to_port[kport] = port.peer_id;
+    	port.enabled = 1;
+     	g_port_infos[k] = port;
         k++;
+    	LOG("create peer port %u for physic port %u, kernel index: %u, mac: "RTE_ETHER_ADDR_PRT_FMT" ip: %s", port.peer_id, port.port_id, kport, RTE_ETHER_ADDR_BYTES(&port.mac_addr), ip_str);
     }
     if(k == 0) {
-        rte_exit(EXIT_FAILURE, "No available port info\n");
-    }
-    LOG("ports initial complete! ports count = %u", rte_eth_dev_count_avail());
+      	rte_exit(EXIT_FAILURE, "No available port info\n");
+   	}
+   	LOG("ports initial complete! ports count = %u", rte_eth_dev_count_avail());
     return 0;
 }

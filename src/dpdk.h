@@ -17,6 +17,7 @@
 #include <rte_mbuf.h>
 #include <rte_malloc.h>
 #include <rte_atomic.h>
+#include <rte_lpm.h>
 
 
 #endif //LWFW_DPDK_H

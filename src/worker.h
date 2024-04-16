@@ -42,13 +42,18 @@ int worker(void *args);
 int dispatch_worker(void *args);
 
 
-inline static int start_control_thread() {
-    pthread_t stats_thread_info, rtm_thread_info;
+inline static int start_stats_thread() {
+    pthread_t stats_thread_info;
 	int res;
     res = pthread_create(&stats_thread_info, NULL, stats_thread, NULL);
     if (res != 0) {
         return 1;
     }
+}
+
+inline static int start_rtm_thread() {
+	pthread_t rtm_thread_info;
+	int res;
     res = pthread_create(&rtm_thread_info, NULL, rtm_thread, NULL);
     if (res != 0) {
         return 1;

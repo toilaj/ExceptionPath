@@ -14,6 +14,7 @@ int eth_process(struct packet *p) {
 		struct iphdr *iphdr = (struct iphdr*)(ethhdr + 1); 
 		if(iphdr->protocol == IPPROTO_ICMP) {
 			p->next_hop = 0;
+			LOG("process icmp pkt");
 			return SUCCESS_CONTINUE;
 		}
 	}

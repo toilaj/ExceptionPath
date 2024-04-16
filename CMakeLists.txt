@@ -23,6 +23,8 @@ add_executable(lwFW
 		src/packet.c
 		src/rtm.h
 		src/rtm.c
+		src/route.c
+		src/route.h
 )
 
 target_compile_options(lwFW PRIVATE ${LIBDPDK_STATIC_CFLAGS} ${LIBNDPI_STATIC_CFLAGS} -g)

@@ -24,8 +24,10 @@ int main()
     ret = rte_eal_init(3, (char **)eal_param);
     if (ret < 0)
         rte_panic("Cannot init EAL\n");
-	
+
+	start_rtm_thread();
     init_ports();
+
     RTE_LCORE_FOREACH_WORKER(lcore_id) {
         LOG("create worker for core %u", lcore_id);
 		init_worker(lcore_id);
@@ -45,8 +47,7 @@ int main()
         rte_delay_ms(1000);
     }
 	LOG("all media threads are started");
-
-	start_control_thread();
+	start_stats_thread();
 	while(1) {
 		//TODO for demo management
 		rte_delay_us(1000 * 10);

@@ -12,6 +12,7 @@
 #include <errno.h>
 
 #include "log.h"
+#include "route.h"
  
 #define EPOLL_LISTEN_MAX_CNT    256
 #define EPOLL_LISTEN_TIMEOUT    500
@@ -42,20 +43,46 @@ void nl_netroute_handle(struct nlmsghdr *nlh)
     rt = NLMSG_DATA(nlh);
     len = nlh->nlmsg_len - NLMSG_SPACE(sizeof(*rt));
     parse_rtattr(tb, RTA_MAX, RTM_RTA(rt), len);
-    LOG("%s: ", (nlh->nlmsg_type==RTM_NEWROUTE)?"NEWROUT":"DELROUT");
-    if (tb[RTA_DST] != NULL) {
-        inet_ntop(rt->rtm_family, RTA_DATA(tb[RTA_DST]), tmp, sizeof(tmp));
-        LOG("DST: %s ", tmp);
-    }
-    if (tb[RTA_SRC] != NULL) {
-        inet_ntop(rt->rtm_family, RTA_DATA(tb[RTA_SRC]), tmp, sizeof(tmp));
-        LOG("SRC: %s ", tmp);
-    }
-    if (tb[RTA_GATEWAY] != NULL) {
-        inet_ntop(rt->rtm_family, RTA_DATA(tb[RTA_GATEWAY]), tmp, sizeof(tmp));
-        LOG("GATEWAY: %s ", tmp);
-    }
-    LOG("\n");
+	
+	switch(nlh->nlmsg_type) {
+		case RTM_NEWROUTE:
+		{
+			if (tb[RTA_DST] != NULL) {
+        		inet_ntop(rt->rtm_family, RTA_DATA(tb[RTA_DST]), tmp, sizeof(tmp));
+        		LOG("DST: %s ", tmp);
+    		}
+    		if (tb[RTA_SRC] != NULL) {
+        		inet_ntop(rt->rtm_family, RTA_DATA(tb[RTA_SRC]), tmp, sizeof(tmp));
+        		LOG("SRC: %s ", tmp);
+    		}
+    		if (tb[RTA_GATEWAY] != NULL) {
+        		inet_ntop(rt->rtm_family, RTA_DATA(tb[RTA_GATEWAY]), tmp, sizeof(tmp));
+        		LOG("GATEWAY: %s ", tmp);
+    		}
+ 			break;		
+		}
+		case RTM_DELROUTE:
+		{
+			if (tb[RTA_DST] != NULL) {
+        		inet_ntop(rt->rtm_family, RTA_DATA(tb[RTA_DST]), tmp, sizeof(tmp));
+        		LOG("DST: %s ", tmp);
+    		}
+    		if (tb[RTA_SRC] != NULL) {
+        		inet_ntop(rt->rtm_family, RTA_DATA(tb[RTA_SRC]), tmp, sizeof(tmp));
+        		LOG("SRC: %s ", tmp);
+    		}
+    		if (tb[RTA_GATEWAY] != NULL) {
+        		inet_ntop(rt->rtm_family, RTA_DATA(tb[RTA_GATEWAY]), tmp, sizeof(tmp));
+        		LOG("GATEWAY: %s ", tmp);
+    		}
+    		LOG("\n");
+ 			break;		
+
+		}
+		default:
+			LOG("other ROUTE MSG: %u\n", nlh->nlmsg_type);
+			break;
+	}	
 }
  
 void nl_netifinfo_handle(struct nlmsghdr *nlh)
@@ -285,11 +312,18 @@ int init_nl_sockfd()
  
 void *rtm_thread(void *args)
 {
-    if (init_epoll_fd() < 0) { 
+	if(init_fastpath_rt(32, 8) < 0) {
+		LOG("init fastpath rt fail");
+		return NULL;
+	}
+
+    if(init_epoll_fd() < 0) { 
+		LOG("init epoll fd fail");
         return NULL;
     }
  
-    if (init_nl_sockfd() < 0) {
+    if(init_nl_sockfd() < 0) {
+		LOG("init nl sock fail");
         return NULL;
     }
  

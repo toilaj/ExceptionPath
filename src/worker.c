@@ -92,7 +92,7 @@ int dispatch_worker(void *args) {
 					struct packet *p = mbuf_to_packet(rx_bufs[j]);
 					uint8_t worker_index = dispatch_hash(p->data + 16 + 12, 8) % (g_worker_cnt - 1) + 2;
 					//uint8_t worker_index = 2;	
-					//LOG("enqueue pkt to worker %u", worker_index);
+					LOG("enqueue pkt to worker %u", worker_index);
 					int ret = rte_ring_enqueue(inbound_ring[worker_index], p);
 					if(ret != 0) {
 						LOG("enqueue inbound ring failed, index: %d", worker_index);
@@ -133,7 +133,7 @@ int dispatch_worker(void *args) {
 			uint16_t peer_port = peer_ports[port_id];	
 			rx_burst = rte_eth_rx_burst(peer_port, 0, (struct rte_mbuf**)&rx_bufs, MAX_PKT_BURST);
 			if(rx_burst > 0) {
-				LOG("send pkt from kernel to normal port(%u, %u)", peer_port, port_id);
+				LOG("send pkt from kernel to normal port(%u -> %u)", peer_port, port_id);
 				dump_mbuf(rx_bufs[0]);
 				tx_burst = rte_eth_tx_burst(port_id, 0, (struct rte_mbuf**)&rx_bufs, rx_burst);
 				if(tx_burst != rx_burst){

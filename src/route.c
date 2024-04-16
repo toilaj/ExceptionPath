@@ -7,7 +7,13 @@
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
 
+#include "dpdk.h"
+#include "log.h"
+
 #define BUF_SIZE 4096
+
+struct rte_lpm *g_fastpath_rt = NULL;
+
 
 int get_kernel_route_table() {
     struct sockaddr_nl addr;
@@ -209,7 +215,48 @@ int delete_kernel_route_item() {
 }
 
 
-int main() {
-	get_kernel_route_table();
+int init_fastpath_rt(uint32_t rules, uint32_t t8s) {
+	struct rte_lpm_config rt_config = {
+		.max_rules = rules,
+		.number_tbl8s = t8s,	
+	};
+	g_fastpath_rt = rte_lpm_create("main", SOCKET_ID_ANY, &rt_config);
+	if(g_fastpath_rt != NULL) {
+		return 0;		
+	}
+	return -1;
+}
+
+int add_fastpath_rt_entry(uint32_t ip, uint8_t mask_len, uint32_t next_hop) {
+	int ret = rte_lpm_add(g_fastpath_rt, ip, mask_len, next_hop);
+	if(ret == 1) {
+		LOG("route entry is exsited!");
+		return 0;
+	}	
+	if(ret < 0) {
+		LOG("add route entry fail!");
+		return -1;
+	}
+	LOG("add route entry success.");
 	return 0;
+}
+
+int del_fastpath_rt_entry(uint32_t ip, uint8_t mask_len) {
+	int ret = rte_lpm_delete(g_fastpath_rt, ip, mask_len);
+	if(ret != 0) {
+		LOG("delete route entry fail");
+		return ret;
+	}	
+	LOG("delete route entry success");
+	return 0;
+}
+
+
+int lookup_fastpath_rt_entry(uint32_t ip, uint32_t *next_hop) {
+	int ret = rte_lpm_lookup(g_fastpath_rt, ip, next_hop);
+	if(ret != 0) {
+		LOG("lookup rt entry fail");
+		return ret;
+	}
+	return 0;	
 }
